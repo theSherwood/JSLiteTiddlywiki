@@ -149,16 +149,23 @@ JSWidget.prototype.split = function(str) {
 
 JSWidget.prototype.getUniqueWords = function(array) {
   let words = {};
+  let dotOperatorFlag;
   for(let i=0; i<array.length; i++) {
+    if(/\./.test(array[i])) {
+      dotOperatorFlag = true;
+    }
     if(/^[A-z_$]+[\w$]*/.test(array[i])) {
-      if(!words[array[i]]) {
-        words[array[i]] = [i];
+      if(!dotOperatorFlag) {
+        if(!words[array[i]]) {
+          words[array[i]] = [i];
+        }else{
+          words[array[i]].push(i);
+        }
       }else{
-        words[array[i]].push(i);
+        dotOperatorFlag = false;
       }
     }
   }
-  // console.log(Object.keys(words));
   console.log(words);
   return words;
 };
