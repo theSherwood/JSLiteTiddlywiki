@@ -30,8 +30,16 @@ JSWidget.prototype.render = function(parent,nextSibling) {
   this.execute();
   this.$js = this.getAttribute("$js","");
   var text = this.$js.replace(/\r/mg,"");
-  eval(text);
-  this.getWords(text);
+  const splitScript = this.split(text);
+  console.log(splitScript);
+  const uniqueWords = this.getUniqueWords(splitScript);
+
+  try {
+    eval(text);  
+  }
+  catch(e) {
+    text = "Javascript Error";
+  }
   var textNode = this.document.createTextNode(text);
   parent.insertBefore(textNode,nextSibling);
   this.domNodes.push(textNode);
@@ -60,7 +68,104 @@ JSWidget.prototype.execute = function() {
   this.makeChildWidgets();
 }; 
 
+JSWidget.prototype.split = function(str) {
+  let split = [];
+  let word = "";
+  let number = "";
+  let string = "";
+  for (let i = 0; i < str.length; i++) {
+    if(word.length > 0) {
+      switch (true) {
+        case /[\w$]/.test(str[i]):
+          word += str[i];
+          break;
+        case /[\d]/.test(str[i]):
+          split.push(word);
+          word = "";
+          number += str[i];
+          break;
+        case /['"]/.test(str[i]):
+          split.push(word);
+          word = "";
+          string += str[i];
+          break;
+        default:
+          split.push(word);
+          word = "";
+          split.push(str[i]);
+          break;
+      }
+    }else if(number.length > 0) {
+      switch (true) {
+        case /[\d]/.test(str[i]):
+          number += str[i];
+          break;
+        case /[\w$]/.test(str[i]):
+          split.push(number);
+          number = "";
+          word += str[i];
+          break;
+        case /['"]/.test(str[i]):
+          split.push(number);
+          number = "";
+          string += str[i];
+          break;
+        default:
+          split.push(number);
+          number = "";
+          split.push(str[i]);
+          break;
+      }
+    }else if(string.length > 0) {
+      switch (true) {
+        case (string[0] === str[i]):
+          string += str[i];
+          split.push(string)
+          string = "";
+          break;
+        default:
+          string += str[i];
+          break;
+      }
+    }else{
+      switch (true) {
+        case /[\w$]/.test(str[i]):
+          word += str[i];
+          break;
+        case /[\d]/.test(str[i]):
+          number += str[i];
+          break;
+        case /['"]/.test(str[i]):
+          string += str[i];
+          break;
+        default:
+          split.push(str[i]);
+          break;
+      }
+    }
+  }
+  return split;
+};
+
+JSWidget.prototype.getUniqueWords = function(array) {
+  let words = {};
+  for(let i=0; i<array.length; i++) {
+    if(/[\w$]+/.test(array[i])) {
+      if(!words[array[i]]) {
+        words[array[i]] = [i];
+      }else{
+        words[array[i]].push(i);
+      }
+    }
+  }
+  // console.log(Object.keys(words));
+  console.log(words);
+  return words;
+};
+
+/*
 JSWidget.prototype.getWords = function(str) {
+  // var re = new RegExp('[A-z]+[\w$]*', 'g');
 	var re = new RegExp('[A-z]+[\w$]*', 'g');
     let words = {};
     let word;
@@ -71,10 +176,11 @@ JSWidget.prototype.getWords = function(str) {
         	words[word[0]].push(word.index);
         }
     }
-    console.log(Object.keys(words));
-    console.log(words);
+    // console.log(Object.keys(words));
+    // console.log(words);
     return words;
 };
+*/
 
 JSWidget.prototype.replaceWords = function(str, words, replacements) {
 	for(let key of replacements) {
