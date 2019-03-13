@@ -150,7 +150,7 @@ JSWidget.prototype.split = function(str) {
 JSWidget.prototype.getUniqueWords = function(array) {
   let words = {};
   for(let i=0; i<array.length; i++) {
-    if(/[\w$]+/.test(array[i])) {
+    if(/^[A-z_$]+[\w$]*/.test(array[i])) {
       if(!words[array[i]]) {
         words[array[i]] = [i];
       }else{
