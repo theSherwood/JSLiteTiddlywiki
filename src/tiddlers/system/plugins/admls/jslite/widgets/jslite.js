@@ -26,14 +26,25 @@ JSWidget.prototype = new Widget();
 /* Renders this widget into the DOM. */
 JSWidget.prototype.render = function(parent,nextSibling) {
   this.parentDomNode = parent;
+  this.declareSafeWords();
   this.computeAttributes();
   this.execute();
   this.$js = this.getAttribute("$js","");
-  var text = this.$js.replace(/\r/mg,"");
-  // console.log(text);
+  let text = this.$js.replace(/\r/mg,"");
+  console.log('TEXT', text);
   const splitScript = this.split(text);
-  // console.log('SPLITSCRIPT', splitScript);
-  const uniqueWords = this.getWords(splitScript);
+  console.log('SPLITSCRIPT', splitScript);
+  const {keywords, declaredVariables} = this.getWords(splitScript);
+  console.log('KEYWORDS', keywords);
+  const {passedCheck, failedCheck} = this.checkAgainstSafeWords(keywords);
+  console.log('PASSEDCHECK', passedCheck);
+  console.log('FAILEDCHECK', failedCheck);
+  const {wikiVariables} = this.checkAgainstWikiVariables(failedCheck);
+  console.log('WIKIVARIABLES', wikiVariables);
+  const declarationString = this.constructWikiVariableString(wikiVariables);
+  console.log('DECLARATIONSTRING', declarationString);
+
+  text = declarationString + text;
 
   try {
     eval(text);  
@@ -128,7 +139,7 @@ JSWidget.prototype.split = function(str) {
           string += str[i];
           break;
       }
-    }else{
+    }else {
       switch (true) {
         case /[\w$]/.test(str[i]):
           word += str[i];
@@ -145,6 +156,8 @@ JSWidget.prototype.split = function(str) {
       }
     }
   }
+  // console.log('W', word, 'N', number, 'S', string);
+  split.push(word + number + string);
   return split;
 };
 
@@ -158,7 +171,7 @@ JSWidget.prototype.getWords = function(array) {
     if(/\./.test(array[i])) {
       dotOperatorFlag = true;
     }else if(["let","const","var"].includes(array[i])) {
-      console.log('VARIABLE', array[i]);
+      // console.log('VARIABLE', array[i]);
       variableDeclarationFlag = true;
       if(!keywords[array[i]]) {
         keywords[array[i]] = [i];
@@ -188,8 +201,8 @@ JSWidget.prototype.getWords = function(array) {
       }
     }
   }
-  console.log(keywords);
-  console.log(declaredVariables)
+  // console.log(keywords);
+  // console.log(declaredVariables)
   return {
     keywords: keywords,
     declaredVariables: declaredVariables
@@ -214,7 +227,7 @@ JSWidget.prototype.checkAgainstSafeWords = function(words) {
 
 JSWidget.prototype.checkAgainstWikiVariables = function(words) {
   const wikiVariables = {};
-  Object.keys(words).forEach(word => {
+  words.forEach(word => {
     const value = this.getVariable(word);
     if(value) {
       wikiVariables[word] = value;
@@ -229,18 +242,17 @@ JSWidget.prototype.checkAgainstWikiVariables = function(words) {
   }
 };
 
-/* May or may not be worth doing.
-Change wiki variable format "tv-wiki-link" to tvWikiLink.
-
 JSWidget.prototype.constructWikiVariableString = function(wikiVariables) {
   let wikiVariableString = "";
   Object.keys(wikiVariables).forEach(key => {
-    const variableDeclaration = `let ${key} = ${wikiVariables[key]}; `;
+    const variableDeclaration = `let ${key} = ${JSON.stringify(wikiVariables[key])}; `;
     wikiVariableString += variableDeclaration;
   });
   return wikiVariableString;
 };
-*/
+
+/* May or may not be worth doing.
+Change wiki variable format "tv-wiki-link" to tvWikiLink.
 
 JSWidget.prototype.javascriptifyVariableName = function(variableName) {
   const variableArray = variableName.split("");
@@ -251,6 +263,7 @@ JSWidget.prototype.javascriptifyVariableName = function(variableName) {
   }
   return variableArray.join('').replace(/[-]/g, "");
 };
+*/
 
 /*
 JSWidget.prototype.getWords = function(str) {
@@ -293,11 +306,13 @@ JSWidget.prototype.refresh = function(changedTiddlers) {
   return this.refreshChildren(changedTiddlers) || hasChangedAttributes;
 };
 
-JSWidget.safeWords = [
+JSWidget.prototype.declareSafeWords = function() {
+  this.safeWords = [
   'do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'null', 'true', 'void', 'with', 'await', 'break', 'catch', 'class', 'const', 'false', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof',
 
   'undefined', 'NaN', 'Math', 'Number', 'Object', 'Array', 'Set', 'Map', 'Date', 'alert', 'console', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'JSON', 'parseFloat', 'parseInt', 'prototype', 'String', 'setTimeout', 'setInterval', 'isPrototypeOf', 'isNaN', 'toString', 'of', 'Boolean', 'RegExp', 'Infinity', 'isFinite', 'Function', 'Symbol', 'Error', 'BigInt', 'Generator', 'GeneratorFunction', 'Promise', 'async', 'await', 'AsyncFunction'
 ]
+};
 
 /*
 const reservedWords = [
