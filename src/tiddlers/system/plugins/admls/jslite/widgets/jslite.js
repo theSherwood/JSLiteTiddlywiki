@@ -29,28 +29,35 @@ JSWidget.prototype.render = function(parent,nextSibling) {
   this.declareSafeWords();
   this.computeAttributes();
   this.execute();
+  this.errors = [];
+
   this.$js = this.getAttribute("$js","");
   let text = this.$js.replace(/\r/mg,"");
-  console.log('TEXT', text);
+  console.log('TEXT:', text);
   const splitScript = this.split(text);
-  console.log('SPLITSCRIPT', splitScript);
-  const {keywords, declaredVariables} = this.getWords(splitScript);
-  console.log('KEYWORDS', keywords);
-  const {passedCheck, failedCheck} = this.checkAgainstSafeWords(keywords);
-  console.log('PASSEDCHECK', passedCheck);
-  console.log('FAILEDCHECK', failedCheck);
-  const {wikiVariables} = this.checkAgainstWikiVariables(failedCheck);
-  console.log('WIKIVARIABLES', wikiVariables);
+  console.log('SPLITSCRIPT:', splitScript);
+  const words = this.getWords(splitScript);
+  console.log('KEYWORDS:', words.keywords);
+  const checkResults = this.checkAgainstSafeWords(words.keywords);
+  console.log('PASSEDCHECK:', checkResults.passedCheck);
+  console.log('FAILEDCHECK:', checkResults.failedCheck);
+  const wikiVariables = this.checkAgainstWikiVariables(checkResults.failedCheck);
+  console.log('WIKIVARIABLES:', wikiVariables);
   const declarationString = this.constructWikiVariableString(wikiVariables);
-  console.log('DECLARATIONSTRING', declarationString);
+  console.log('DECLARATIONSTRING:', declarationString);
 
   text = declarationString + text;
 
   try {
-    eval(text);  
+    if(this.errors.length > 0){
+      throw this.errors;
+    } else {
+    eval(text);
+    } 
   }
   catch(e) {
-    text = "Javascript Error";
+    text = e;
+    console.log(e);
   }
   var textNode = this.document.createTextNode(text);
   parent.insertBefore(textNode,nextSibling);
@@ -178,7 +185,7 @@ JSWidget.prototype.getWords = function(array) {
       }else{
         keywords[array[i]].push(i);
       }
-    }else if(/^[A-z_$]+[\w$]*/.test(array[i])) { // Includes hyphens for wiki variables: /^[A-z_$]+[\w$-]*/
+    }else if(/[a-zA-Z_$]+[\w$]*/.test(array[i])) { // Includes hyphens for wiki variables: /^[A-z_$]+[\w$-]*/
       if(!dotOperatorFlag && !variableDeclarationFlag) {
         if(declaredVariables[array[i]]) {
           declaredVariables[array[i]].push(i);
@@ -191,9 +198,7 @@ JSWidget.prototype.getWords = function(array) {
         if(!keywords[array[i]]) {
           declaredVariables[array[i]] = [i];
         }else{
-          return {
-            error: `"${array[i]}" redeclared or used prior to declaration`
-          }
+          this.errors.push(`"${array[i]}" redeclared or used prior to declaration`)
         }
         variableDeclarationFlag = false;
       }else{
@@ -232,14 +237,10 @@ JSWidget.prototype.checkAgainstWikiVariables = function(words) {
     if(value) {
       wikiVariables[word] = value;
     } else {
-      return {
-        error: `"${word}" doesn't appear in whitelist or wiki variables`
-      }
+      this.errors.push(`"${word}" doesn't appear in whitelist or wiki variables`);
     }
   });
-  return {
-    wikiVariables: wikiVariables
-  }
+  return wikiVariables;
 };
 
 JSWidget.prototype.constructWikiVariableString = function(wikiVariables) {
