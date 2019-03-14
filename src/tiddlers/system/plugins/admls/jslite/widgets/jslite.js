@@ -30,9 +30,10 @@ JSWidget.prototype.render = function(parent,nextSibling) {
   this.execute();
   this.$js = this.getAttribute("$js","");
   var text = this.$js.replace(/\r/mg,"");
+  // console.log(text);
   const splitScript = this.split(text);
-  console.log(splitScript);
-  const uniqueWords = this.getUniqueWords(splitScript);
+  // console.log('SPLITSCRIPT', splitScript);
+  const uniqueWords = this.getWords(splitScript);
 
   try {
     eval(text);  
@@ -52,11 +53,11 @@ JSWidget.prototype.execute = function() {
   self.args = {};
   $tw.utils.each(this.attributes,function(val,key) {
   	if(key.charAt(0) !== "$") {
-    	self.args[key] = val;
+      self.args[key] = val;
   		//self.setVariable(key,val);
   	}
   });
-
+  console.log('ARGUMENTS', self.args);
 /*
   this.js = this.getAttribute("js","");
   this.wrapper = "let namespace = () => {
@@ -147,27 +148,53 @@ JSWidget.prototype.split = function(str) {
   return split;
 };
 
-JSWidget.prototype.getUniqueWords = function(array) {
-  let words = {};
+JSWidget.prototype.getWords = function(array) {
+  let keywords = {};
+  let declaredVariables = {};
+
   let dotOperatorFlag;
+  let variableDeclarationFlag;
   for(let i=0; i<array.length; i++) {
     if(/\./.test(array[i])) {
       dotOperatorFlag = true;
-    }
-    if(/^[A-z_$]+[\w$]*/.test(array[i])) {
-      if(!dotOperatorFlag) {
-        if(!words[array[i]]) {
-          words[array[i]] = [i];
+    }else if(["let","const","var"].includes(array[i])) {
+      console.log('VARIABLE', array[i]);
+      variableDeclarationFlag = true;
+      if(!keywords[array[i]]) {
+        keywords[array[i]] = [i];
+      }else{
+        keywords[array[i]].push(i);
+      }
+    }else if(/^[A-z_$]+[\w$]*/.test(array[i])) {
+      if(!dotOperatorFlag && !variableDeclarationFlag) {
+        if(declaredVariables[array[i]]) {
+          declaredVariables[array[i]].push(i);
+        }else if(!keywords[array[i]]) {
+          keywords[array[i]] = [i];
         }else{
-          words[array[i]].push(i);
+          keywords[array[i]].push(i);
         }
+      }else if(variableDeclarationFlag) {
+        if(!keywords[array[i]]) {
+          declaredVariables[array[i]] = [i];
+        }else{
+          return {
+            error: "Variables must be declared before they can be used."
+          }
+        }
+        variableDeclarationFlag = false;
       }else{
         dotOperatorFlag = false;
       }
     }
   }
-  console.log(words);
-  return words;
+  console.log(keywords);
+  console.log(declaredVariables)
+  return {
+    keywords: keywords,
+    declaredVariables: declaredVariables,
+    error: null
+  }
 };
 
 /*
@@ -210,6 +237,13 @@ JSWidget.prototype.refresh = function(changedTiddlers) {
   }
   return this.refreshChildren(changedTiddlers) || hasChangedAttributes;
 };
+
+const reservedWords = [
+  'do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'null', 'true', 'void', 'with', 'await', 'break', 'catch', 'class', 'const', 'false', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof',
+
+  'undefined', 'NaN', 'Math', 'Number', 'Object', 'Array', 'Set', 'Map', 'Date', 'alert', 'console', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'JSON', 'parseFloat', 'parseInt', 'prototype', 'String', 'setTimeout', 'setInterval', 'isPrototypeOf', 'isNaN', 'toString', 'of', 'Boolean', 'RegExp', 'Infinity', 'isFinite', 'Function', 'Symbol', 'Error', 'BigInt', 'Generator', 'GeneratorFunction'
+]
+
 
 /* Finally exports the widget constructor. */
 exports.jslite = JSWidget;
