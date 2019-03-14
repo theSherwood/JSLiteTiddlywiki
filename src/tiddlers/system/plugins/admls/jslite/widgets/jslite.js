@@ -177,7 +177,7 @@ JSWidget.prototype.getWords = function(array) {
   for(let i=0; i<array.length; i++) {
     if(/\./.test(array[i])) {
       dotOperatorFlag = true;
-    }else if(["let","const","var"].includes(array[i])) {
+    }else if(["let","const","var","function"].includes(array[i])) {
       // console.log('VARIABLE', array[i]);
       variableDeclarationFlag = true;
       if(!keywords[array[i]]) {
@@ -185,7 +185,7 @@ JSWidget.prototype.getWords = function(array) {
       }else{
         keywords[array[i]].push(i);
       }
-    }else if(/[a-zA-Z_$]+[\w$]*/.test(array[i])) { // Includes hyphens for wiki variables: /^[A-z_$]+[\w$-]*/
+    }else if(/^[a-zA-Z_$]+[\w$]*/.test(array[i])) { // Includes hyphens for wiki variables: /^[A-z_$]+[\w$-]*/
       if(!dotOperatorFlag && !variableDeclarationFlag) {
         if(declaredVariables[array[i]]) {
           declaredVariables[array[i]].push(i);
