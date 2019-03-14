@@ -49,15 +49,15 @@ JSWidget.prototype.render = function(parent,nextSibling) {
 /* Computes the internal state of this widget. */
 JSWidget.prototype.execute = function() {
   // Parse variables
-  var self = this;
-  self.args = {};
-  $tw.utils.each(this.attributes,function(val,key) {
-  	if(key.charAt(0) !== "$") {
-      self.args[key] = val;
-  		//self.setVariable(key,val);
-  	}
-  });
-  console.log('ARGUMENTS', self.args);
+  // var self = this;
+  // self.args = {};
+  // $tw.utils.each(this.attributes,function(val,key) {
+  // 	if(key.charAt(0) !== "$") {
+  //     self.args[key] = val;
+  // 		//self.setVariable(key,val);
+  // 	}
+  // });
+  // console.log('ARGUMENTS', self.args);
 /*
   this.js = this.getAttribute("js","");
   this.wrapper = "let namespace = () => {
@@ -179,7 +179,7 @@ JSWidget.prototype.getWords = function(array) {
           declaredVariables[array[i]] = [i];
         }else{
           return {
-            error: "Variables must be declared before they can be used."
+            error: `"${array[i]}" redeclared or used prior to declaration`
           }
         }
         variableDeclarationFlag = false;
@@ -192,10 +192,51 @@ JSWidget.prototype.getWords = function(array) {
   console.log(declaredVariables)
   return {
     keywords: keywords,
-    declaredVariables: declaredVariables,
-    error: null
+    declaredVariables: declaredVariables
   }
 };
+
+JSWidget.prototype.checkAgainstSafeWords = function(words) {
+  const passedCheck = [];
+  const failedCheck = [];
+  Object.keys(words).forEach(word => {
+    if(this.safeWords.includes(word)) {
+      passedCheck.push(word);
+    } else {
+      failedCheck.push(word);
+    }
+  })
+  return {
+    passedCheck: passedCheck,
+    failedCheck: failedCheck
+  }
+};
+
+JSWidget.prototype.checkAgainstWikiVariables = function(words) {
+  const wikiVariables = {};
+  Object.keys(words).forEach(word => {
+    const value = this.getVariable(word);
+    if(value) {
+      wikiVariables[word] = value;
+    } else {
+      return {
+        error: `"${word}" doesn't appear in whitelist or wiki variables`
+      }
+    }
+  });
+  return {
+    wikiVariables: wikiVariables
+  }
+};
+
+JSWidget.prototype.constructWikiVariableString = function(wikiVariables) {
+  let wikiVariableString = "";
+  Object.keys(wikiVariables).forEach(key => {
+    const variableDeclaration = `let ${key} = ${wikiVariables[key]}; `;
+    wikiVariableString += variableDeclaration;
+  });
+  return wikiVariableString;
+}
 
 /*
 JSWidget.prototype.getWords = function(str) {
@@ -238,11 +279,19 @@ JSWidget.prototype.refresh = function(changedTiddlers) {
   return this.refreshChildren(changedTiddlers) || hasChangedAttributes;
 };
 
-const reservedWords = [
+JSWidget.safeWords = [
   'do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'null', 'true', 'void', 'with', 'await', 'break', 'catch', 'class', 'const', 'false', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof',
 
-  'undefined', 'NaN', 'Math', 'Number', 'Object', 'Array', 'Set', 'Map', 'Date', 'alert', 'console', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'JSON', 'parseFloat', 'parseInt', 'prototype', 'String', 'setTimeout', 'setInterval', 'isPrototypeOf', 'isNaN', 'toString', 'of', 'Boolean', 'RegExp', 'Infinity', 'isFinite', 'Function', 'Symbol', 'Error', 'BigInt', 'Generator', 'GeneratorFunction'
+  'undefined', 'NaN', 'Math', 'Number', 'Object', 'Array', 'Set', 'Map', 'Date', 'alert', 'console', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'JSON', 'parseFloat', 'parseInt', 'prototype', 'String', 'setTimeout', 'setInterval', 'isPrototypeOf', 'isNaN', 'toString', 'of', 'Boolean', 'RegExp', 'Infinity', 'isFinite', 'Function', 'Symbol', 'Error', 'BigInt', 'Generator', 'GeneratorFunction', 'Promise', 'async', 'await', 'AsyncFunction'
 ]
+
+/*
+const reservedWords = [
+  'do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'null', 'true', 'this', 'void', 'with', 'await', 'break', 'catch', 'class', 'const', 'false', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof',
+
+  'undefined', 'NaN', 'Math', 'Number', 'Object', 'Array', 'Set', 'Map', 'Date', 'alert', 'console', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'JSON', 'parseFloat', 'parseInt', 'prototype', 'String', 'setTimeout', 'setInterval', 'isPrototypeOf', 'isNaN', 'toString', 'of', 'Boolean', 'RegExp', 'Infinity', 'isFinite', 'Function', 'Symbol', 'Error', 'BigInt', 'Generator', 'GeneratorFunction', 'Promise', 'async', 'await', 'AsyncFunction'
+]
+*/
 
 
 /* Finally exports the widget constructor. */
