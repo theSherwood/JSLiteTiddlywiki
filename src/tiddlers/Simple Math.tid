@@ -1,0 +1,10 @@
+created: 20190313233213485
+modified: 20190314155725210
+tags: 
+title: Simple Math
+type: text/vnd.tiddlywiki
+
+<$jslite $js="""
+console.log(3*3)
+""">
+</$jslite>

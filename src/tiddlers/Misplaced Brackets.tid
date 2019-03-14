@@ -1,0 +1,8 @@
+created: 20190313232437846
+modified: 20190314155633565
+tags: test
+title: Misplaced Brackets
+type: text/vnd.tiddlywiki
+
+<$jslite $js="[[let three = 3;]]">
+</$jslite>

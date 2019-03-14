@@ -1,0 +1,11 @@
+created: 20190313230445486
+modified: 20190314160425853
+tags: test
+title: Error: Redeclaration of Variable
+type: text/vnd.tiddlywiki
+
+<$jslite $js="""
+let three = 3;
+let three = 3;
+""">
+</$jslite>

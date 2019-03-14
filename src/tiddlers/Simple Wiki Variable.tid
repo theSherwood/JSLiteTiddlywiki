@@ -1,0 +1,12 @@
+created: 20190314134842651
+modified: 20190314155825936
+tags: test
+title: Simple Wiki Variable
+type: text/vnd.tiddlywiki
+
+<$set name="test" value="THIS IS A TEST">
+<$jslite $js="""
+console.log("TEST:", test);
+""">
+</$jslite>
+</$set>

@@ -1,0 +1,12 @@
+created: 20190314155658330
+modified: 20190314160222387
+tags: test
+title: Wiki Variable Filter
+type: text/vnd.tiddlywiki
+
+<$set name="test" filter="[all[shadows+tiddlers]tag[$:/tags/ViewTemplate]]">
+<$jslite $js="""
+console.log(test)
+""">
+</$jslite>
+</$set>

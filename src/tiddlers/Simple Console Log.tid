@@ -1,0 +1,8 @@
+created: 20190312195150584
+modified: 20190314155552481
+tags: test
+title: Simple Console Log
+type: text/vnd.tiddlywiki
+
+<$jslite $js="console.log('HERE')">
+</$jslite>
