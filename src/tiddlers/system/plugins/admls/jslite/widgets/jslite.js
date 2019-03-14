@@ -39,9 +39,9 @@ JSWidget.prototype.render = function(parent,nextSibling) {
   const words = this.getWords(splitScript);
   console.log('KEYWORDS:', words.keywords);
   const checkResults = this.checkAgainstSafeWords(words.keywords);
-  console.log('PASSEDCHECK:', checkResults.passedCheck);
-  console.log('FAILEDCHECK:', checkResults.failedCheck);
-  const wikiVariables = this.checkAgainstWikiVariables(checkResults.failedCheck);
+  console.log('PASSEDSAFECHECK:', checkResults.passedSafeCheck);
+  console.log('FAILEDSAFECHECK:', checkResults.failedSafeCheck);
+  const wikiVariables = this.checkAgainstWikiVariables(checkResults.failedSafeCheck);
   console.log('WIKIVARIABLES:', wikiVariables);
   const declarationString = this.constructWikiVariableString(wikiVariables);
   console.log('DECLARATIONSTRING:', declarationString);
@@ -215,18 +215,18 @@ JSWidget.prototype.getWords = function(array) {
 };
 
 JSWidget.prototype.checkAgainstSafeWords = function(words) {
-  const passedCheck = [];
-  const failedCheck = [];
+  const passedSafeCheck = [];
+  const failedSafeCheck = [];
   Object.keys(words).forEach(word => {
     if(this.safeWords.includes(word)) {
-      passedCheck.push(word);
+      passedSafeCheck.push(word);
     } else {
-      failedCheck.push(word);
+      failedSafeCheck.push(word);
     }
   })
   return {
-    passedCheck: passedCheck,
-    failedCheck: failedCheck
+    passedSafeCheck: passedSafeCheck,
+    failedSafeCheck: failedSafeCheck
   }
 };
 
