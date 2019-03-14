@@ -165,7 +165,7 @@ JSWidget.prototype.getWords = function(array) {
       }else{
         keywords[array[i]].push(i);
       }
-    }else if(/^[A-z_$]+[\w$]*/.test(array[i])) {
+    }else if(/^[A-z_$]+[\w$]*/.test(array[i])) { // Includes hyphens for wiki variables: /^[A-z_$]+[\w$-]*/
       if(!dotOperatorFlag && !variableDeclarationFlag) {
         if(declaredVariables[array[i]]) {
           declaredVariables[array[i]].push(i);
@@ -229,6 +229,9 @@ JSWidget.prototype.checkAgainstWikiVariables = function(words) {
   }
 };
 
+/* May or may not be worth doing.
+Change wiki variable format "tv-wiki-link" to tvWikiLink.
+
 JSWidget.prototype.constructWikiVariableString = function(wikiVariables) {
   let wikiVariableString = "";
   Object.keys(wikiVariables).forEach(key => {
@@ -236,7 +239,18 @@ JSWidget.prototype.constructWikiVariableString = function(wikiVariables) {
     wikiVariableString += variableDeclaration;
   });
   return wikiVariableString;
-}
+};
+*/
+
+JSWidget.prototype.javascriptifyVariableName = function(variableName) {
+  const variableArray = variableName.split("");
+  for(let i=0; i<variableArray.length; i++) {
+    if(variableArray[i] === "-") {
+      variableArray[i+1] = variableArray[i+1].toUpperCase();
+    }
+  }
+  return variableArray.join('').replace(/[-]/g, "");
+};
 
 /*
 JSWidget.prototype.getWords = function(str) {
